@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Stream Configuration</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        .admin-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        }
+        .preview-section {
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+        .preview-box {
+            border: 1px dashed #ccc;
+            padding: 15px;
+            margin-top: 15px;
+            background-color: #f9f9f9;
+        }
+        .form-label {
+            font-weight: 600;
+        }
+        .btn-primary {
+            background-color: #e62017;
+            border-color: #e62017;
+        }
+        .btn-primary:hover {
+            background-color: #c41a12;
+            border-color: #c41a12;
+        }
+        .image-preview {
+            max-width: 100%;
+            max-height: 200px;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <h2 class="text-center mb-4">Stream Configuration Admin Panel</h2>
+        
+        <form id="configForm">
+            <div class="mb-3">
+                <label for="streamTitle" class="form-label">Stream Title</label>
+                <input type="text" class="form-control" id="streamTitle" placeholder="Enter stream title">
+            </div>
+            
+            <div class="mb-3">
+                <label for="buttonUrl" class="form-label">Button URL (Sign Up/Continue Streaming)</label>
+                <input type="url" class="form-control" id="buttonUrl" placeholder="Enter button URL">
+            </div>
+            
+            <div class="mb-3">
+                <label for="backgroundImage" class="form-label">Background Image</label>
+                <input type="file" class="form-control" id="backgroundImage" accept="image/*">
+                <div class="mt-2">
+                    <img id="backgroundPreview" class="image-preview" alt="Background preview">
+                </div>
+                <small class="text-muted">Recommended size: 1920x1080 or similar aspect ratio</small>
+            </div>
+            
+            <div class="mb-3">
+                <label for="currentImage" class="form-label">Current Background Image</label>
+                <select class="form-select" id="currentImage">
+                    <option value="images/open1.jpg">Default Background (open1.jpg)</option>
+                    <option value="images/open2.jpg">Alternate Background (open2.jpg)</option>
+                </select>
+            </div>
+            
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <button type="button" class="btn btn-secondary" id="resetBtn">Reset to Default</button>
+            </div>
+        </form>
+        
+        <div class="preview-section">
+            <h4>Preview</h4>
+            <div class="preview-box">
+                <div id="titlePreview" style="color:white;background: #e62017;padding: 10px;text-align: center;"></div>
+                <div class="mt-2">
+                    <strong>Button URL:</strong> <span id="urlPreview" class="text-muted"></span>
+                </div>
+                <div class="mt-2">
+                    <strong>Background:</strong> <span id="bgPreview" class="text-muted"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+    // Load saved configuration
+    loadConfig();
+    
+    // Form submission handler
+    document.getElementById('configForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        saveConfig();
+    });
+    
+    // Reset button handler
+    document.getElementById('resetBtn').addEventListener('click', function() {
+        resetConfig();
+    });
+    
+    // Background image preview
+    document.getElementById('backgroundImage').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                document.getElementById('backgroundPreview').src = event.target.result;
+                document.getElementById('backgroundPreview').style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+    
+    // Update preview when inputs change
+    document.getElementById('streamTitle').addEventListener('input', updatePreview);
+    document.getElementById('buttonUrl').addEventListener('input', updatePreview);
+    document.getElementById('currentImage').addEventListener('change', updatePreview);
+});
+
+function loadConfig() {
+    const config = JSON.parse(localStorage.getItem('streamConfig')) || {};
+    
+    document.getElementById('streamTitle').value = config.streamTitle || 'Watch - Round 1 Lydden Hill 2025 5 Nations British Rallycross Championship Live Stream';
+    document.getElementById('buttonUrl').value = config.buttonUrl || 'https://api.powerafftrky.com/t/clk?id=r2tX5fRARsP6Znh7&s1=subaffiliate&s2=clickid';
+    document.getElementById('currentImage').value = config.backgroundImage || 'images/open1.jpg';
+    
+    updatePreview();
+}
+
+function saveConfig() {
+    const config = {
+        streamTitle: document.getElementById('streamTitle').value,
+        buttonUrl: document.getElementById('buttonUrl').value,
+        backgroundImage: document.getElementById('currentImage').value
+    };
+    
+    // Handle uploaded image
+    const fileInput = document.getElementById('backgroundImage');
+    if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        
+        reader.onload = function(event) {
+            // Store the image data URL
+            config.backgroundImageData = event.target.result;
+            localStorage.setItem('streamConfig', JSON.stringify(config));
+            alert('Configuration saved successfully!');
+        };
+        
+        reader.readAsDataURL(file);
+    } else {
+        localStorage.setItem('streamConfig', JSON.stringify(config));
+        alert('Configuration saved successfully!');
+    }
+}
+
+function resetConfig() {
+    if (confirm('Are you sure you want to reset to default configuration?')) {
+        localStorage.removeItem('streamConfig');
+        loadConfig();
+        document.getElementById('backgroundImage').value = '';
+        document.getElementById('backgroundPreview').style.display = 'none';
+    }
+}
+
+function updatePreview() {
+    document.getElementById('titlePreview').textContent = document.getElementById('streamTitle').value || 'Watch - Round 1 Lydden Hill 2025 5 Nations British Rallycross Championship Live Stream';
+    document.getElementById('urlPreview').textContent = document.getElementById('buttonUrl').value || 'https://api.powerafftrky.com/t/clk?id=r2tX5fRARsP6Znh7&s1=subaffiliate&s2=clickid';
+    document.getElementById('bgPreview').textContent = document.getElementById('currentImage').value || 'images/open1.jpg';
+}
+    </script>
+</body>
+</html>
